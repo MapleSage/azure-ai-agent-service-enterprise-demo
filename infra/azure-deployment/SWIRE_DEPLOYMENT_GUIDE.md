@@ -12,8 +12,6 @@ This guide walks you through deploying the Azure AI Enterprise Agent for Swire R
 
 ## Step 1: Set Up Azure AI Foundry
 
-Before deploying the web app, you need to create the agent and vector store:
-
 ### 1.1 Create Azure AI Foundry Project (if not exists)
 
 ```bash
@@ -27,12 +25,27 @@ az account set --subscription "Azure subscription 1"
 # Or use existing project from swire-copilot-dev-rg
 ```
 
-### 1.2 Run the Jupyter Notebook
+### 1.2 Run the Automated Setup Script
 
-Open `enterprise-streaming-agent.ipynb` in the root directory and run through the cells to:
-- Create the agent
-- Upload your operations manual documents to the vector store
-- Test the agent locally
+Instead of using a Jupyter notebook, we have a modern Python script that automates everything:
+
+```bash
+cd infra/azure-deployment
+
+# Install required packages (if not already installed)
+pip install azure-ai-projects azure-identity python-dotenv
+
+# Run the setup script
+python setup-agent.py
+```
+
+This script will:
+- Create the AI agent in Azure AI Foundry
+- Create the vector store for document search
+- Upload all documents from `enterprise-data/` folder
+- Configure everything automatically
+
+No notebook required!
 
 ## Step 2: Configure Environment Variables
 
