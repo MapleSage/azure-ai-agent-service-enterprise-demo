@@ -46,9 +46,22 @@ load_dotenv(override=True)
 credential = DefaultAzureCredential()
 retry_policy = RetryPolicy()
 transport = RequestsTransport(connection_timeout=600, read_timeout=600)
-project_client = AIProjectClient.from_connection_string(
+
+# Parse connection string: hostname;subscription;resourcegroup;projectname
+conn_str = os.environ["PROJECT_CONNECTION_STRING"]
+parts = conn_str.split(';')
+if len(parts) != 4:
+    raise ValueError("Invalid PROJECT_CONNECTION_STRING format. Expected: hostname;subscription;resourcegroup;projectname")
+
+hostname, subscription_id, resource_group_name, project_name = parts
+endpoint = f"https://{hostname}"
+
+project_client = AIProjectClient(
+    endpoint=endpoint,
+    subscription_id=subscription_id,
+    resource_group_name=resource_group_name,
+    project_name=project_name,
     credential=credential,
-    conn_str=os.environ["PROJECT_CONNECTION_STRING"],
     retry_policy=retry_policy,
     transport=transport
 )
@@ -58,7 +71,7 @@ AGENT_NAME = os.environ["AGENT_NAME"]
 
 # Find the agent by name
 found_agent = None
-all_agents_list = project_client.agents.list_agents().data
+all_agents_list = list(project_client.agents.list_agents())
 for a in all_agents_list:
     if a.name == AGENT_NAME:
         found_agent = a
@@ -84,7 +97,7 @@ except Exception as e:
     print(f"bing failed > no connection found or permission issue: {e}")
 
 VECTOR_STORE_NAME = os.environ["VECTOR_STORE_NAME"]
-all_vector_stores = project_client.agents.list_vector_stores().data
+all_vector_stores = list(project_client.agents.list_vector_stores())
 existing_vector_store = next(
     (store for store in all_vector_stores if store.name == VECTOR_STORE_NAME),
     None
