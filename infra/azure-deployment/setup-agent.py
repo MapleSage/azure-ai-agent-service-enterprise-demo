@@ -10,7 +10,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import FilePurpose
 
 # Load environment variables
 load_dotenv()
@@ -41,9 +40,23 @@ def main():
     print("🔗 Connecting to Azure AI Foundry...")
     try:
         credential = DefaultAzureCredential()
-        project_client = AIProjectClient.from_connection_string(
-            credential=credential,
-            conn_str=conn_str
+        
+        # Parse connection string: hostname;subscription;resourcegroup;projectname
+        parts = conn_str.split(';')
+        if len(parts) != 4:
+            print(f"❌ Invalid connection string format")
+            print("Expected format: hostname;subscription;resourcegroup;projectname")
+            sys.exit(1)
+        
+        hostname, subscription_id, resource_group_name, project_name = parts
+        endpoint = f"https://{hostname}"
+        
+        project_client = AIProjectClient(
+            endpoint=endpoint,
+            subscription_id=subscription_id,
+            resource_group_name=resource_group_name,
+            project_name=project_name,
+            credential=credential
         )
         print("✓ Connected successfully")
     except Exception as e:
@@ -56,8 +69,8 @@ def main():
     print(f"🤖 Checking for existing agent '{agent_name}'...")
     existing_agent = None
     try:
-        agents = project_client.agents.list_agents()
-        for agent in agents.data:
+        agents = list(project_client.agents.list_agents())
+        for agent in agents:
             if agent.name == agent_name:
                 existing_agent = agent
                 break
@@ -97,8 +110,8 @@ Prioritize safety and compliance in all responses."""
     print(f"📚 Checking for existing vector store '{vector_store_name}'...")
     existing_vector_store = None
     try:
-        vector_stores = project_client.agents.list_vector_stores()
-        for store in vector_stores.data:
+        vector_stores = list(project_client.agents.list_vector_stores())
+        for store in vector_stores:
             if store.name == vector_store_name:
                 existing_vector_store = store
                 break
@@ -151,7 +164,7 @@ Prioritize safety and compliance in all responses."""
                     with open(doc_file, "rb") as f:
                         file = project_client.agents.upload_file_and_poll(
                             file=f,
-                            purpose=FilePurpose.AGENTS
+                            purpose="assistants"
                         )
                     
                     # Add file to vector store
