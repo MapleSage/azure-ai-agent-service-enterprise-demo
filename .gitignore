@@ -404,3 +404,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Deployment artifacts
+infra/azure-deployment/app.zip
+infra/azure-deployment/start.sh
+*.zip
