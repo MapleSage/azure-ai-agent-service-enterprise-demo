@@ -20,6 +20,17 @@ SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
 echo "Using Subscription ID: $SUBSCRIPTION_ID"
 
 # -------------------------------
+# Create or re-use the Resource Group
+# -------------------------------
+echo "Checking if the Resource Group $RESOURCE_GROUP exists..."
+if ! az group show --name "$RESOURCE_GROUP" &>/dev/null; then
+  echo "Resource Group $RESOURCE_GROUP not found. Creating..."
+  az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
+else
+  echo "Resource Group $RESOURCE_GROUP already exists."
+fi
+
+# -------------------------------
 # Create or re-use the App Service Plan
 # -------------------------------
 echo "Checking if the App Service Plan $APP_SERVICE_PLAN exists..."
@@ -105,8 +116,9 @@ az webapp config set --resource-group "$RESOURCE_GROUP" --name "$WEB_APP_NAME" -
 # -------------------------------
 # Prepare and deploy the application code
 # -------------------------------
-# Change directory to the application folder (update this path if needed)
-cd /home/dhangerkapil/azure-ai-agent-service-enterprise-demo/azure || { echo "Directory not found"; exit 1; }
+# Get the current script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR" || { echo "Directory not found"; exit 1; }
 
 # Remove any old ZIP file
 rm -f app.zip
